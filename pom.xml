@@ -88,7 +88,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.0.0-M7</version>
 				<configuration>
-					<argLine>${argLine} -Xmx2048m</argLine>
+					<forkCount>0</forkCount>
 				</configuration>
 			</plugin>
 
