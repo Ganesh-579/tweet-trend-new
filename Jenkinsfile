@@ -11,9 +11,16 @@ pipeline {
     stages {
         stage('Build'){
             steps {
-                sh 'mvn clean deploy'
+                sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
+        stage('test'{
+            steps {
+                echo "<-----unit test started----->"
+                sh 'mvn surfire-report:report'
+                echo "<-----unit test started----->"
+            }
+        })
         stage('sonarqube analysis'){
         environment {
             scannerHome = tool 'sonar-scanner'
