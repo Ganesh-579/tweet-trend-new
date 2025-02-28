@@ -1,7 +1,8 @@
-def registry = 'http://valaxy679.jfrog.io/'
+def registry = 'http://valaxy679.jfrog.io'  // Removed extra '/'
+
 pipeline {
     agent {
-        node{
+        node {
             label 'maven'
         }
     }
@@ -10,63 +11,80 @@ pipeline {
     }
 
     stages {
-        stage('Build'){
+        stage('Build') {
             steps {
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
-        /*stage('test'){
+
+        /* Uncomment if tests are needed
+        stage('test') {
             steps {
                 echo "<-----unit test started----->"
                 sh 'mvn surefire-report:report'
-                echo "<-----unit test started----->"
-            }
-        }*/
-        stage('sonarqube analysis'){
-        environment {
-            scannerHome = tool 'sonar-scanner'
-        }
-        steps {
-            withSonarQubeEnv('sonarqube-server'){
-              sh "${scannerHome}/bin/sonar-scanner"
+                echo "<-----unit test ended----->"
             }
         }
-    }
-    stage ('Quality Gate'){
-        steps {
-            script { 
-            timeout(time: 1, unit: 'HOURS') {
-                def qg = waitForQualityGate()
-                if (qg.status != 'OK') {
-                    error "pipeline aborted due to quality gate failure: ${qg.status}"
+        */
+
+        stage('SonarQube Analysis') {
+            environment {
+                scannerHome = tool 'sonar-scanner'
+            }
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh "${scannerHome}/bin/sonar-scanner"
                 }
             }
-            }
         }
-    }
-    stage ('upload artifact to jfrog'){
-        steps {
-            script {
-                echo '<-----uploading artifact to jfrog----->'
-                def server = Artifactory.newserver url:registry+"/artifactory", credentialsId: 'jfrog-cred'
-                def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}";
-                def uploadspec = """{
-                    "files": [
-                        {
-                            "pattern": "jarstaging/(*)",
-                            "target": "libs-release-local1/{1}",
-                            "flat": "false",
-                            "props": "${properties}"
-                            "exclusions": ["**/*.md5", "**/*.sha1"]
+
+        stage('Quality Gate') {
+            steps {
+                script {
+                    timeout(time: 1, unit: 'HOURS') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
                         }
-                    ]
-                }"""
-                def buildInfo = server.upload(uploadspec)
-                buildInfo.env.collect()
-                server.publishBuildInfo(buildInfo)
-                echo '<-----jar publish ended----->'
+                    }
+                }
+            }
+        }
+
+        stage('Upload Artifact to JFrog') {
+            steps {
+                script {
+                    echo '<----- Uploading artifact to JFrog ----->'
+
+                    // Define Artifactory server
+                    def server = Artifactory.newServer(
+                        url: "${registry}/artifactory",
+                        credentialsId: 'jfrog-cred'
+                    )
+
+                    def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}"
+
+                    // Upload spec - fixed JSON formatting issues
+                    def uploadSpec = """{
+                        "files": [
+                            {
+                                "pattern": "jarstaging/(*)",
+                                "target": "libs-release-local1/{1}",
+                                "flat": false,
+                                "props": "${properties}",
+                                "exclusions": ["**/*.md5", "**/*.sha1"]
+                            }
+                        ]
+                    }"""
+
+                    // Upload artifacts
+                    def buildInfo = server.upload(uploadSpec)
+                    buildInfo.env.collect()
+                    server.publishBuildInfo(buildInfo)
+
+                    echo '<----- JAR publish completed ----->'
+                }
             }
         }
     }
-    }
-} 
+}
