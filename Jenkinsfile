@@ -25,7 +25,7 @@ pipeline {
                 echo "<-----unit test ended----->"
             }
         }
-        */
+        
 
         stage('SonarQube Analysis') {
             environment {
@@ -49,14 +49,13 @@ pipeline {
                     }
                 }
             }
-        }
-
+        }*/
         stage('Upload Artifact to JFrog') {
             steps {
                 script {
                     echo '<----- Uploading artifact to JFrog ----->'
 
-                    // Define Artifactory server
+                    // Create Artifactory server connection
                     def server = Artifactory.newServer(
                         url: "${registry}/artifactory",
                         credentialsId: 'jfrog-cred'
@@ -64,21 +63,22 @@ pipeline {
 
                     def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}"
 
-                    // Upload spec - fixed JSON formatting issues
+                    // Ensure target repository is correct
                     def uploadSpec = """{
                         "files": [
                             {
-                                "pattern": "jarstaging/(*)",
-                                "target": "libs-release-local1/{1}",
+                                "pattern": "target/*.jar",
+                                "target": "libs-release-local1/com/valaxy/demo-workshop/${env.BUILD_ID}/",
                                 "flat": false,
-                                "props": "${properties}",
-                                "exclusions": ["**/*.md5", "**/*.sha1"]
+                                "props": "${properties}"
                             }
                         ]
                     }"""
 
-                    // Upload artifacts
-                    def buildInfo = server.upload(uploadSpec)
+                    echo "Uploading with spec: ${uploadSpec}"
+
+                    // Upload artifact
+                    def buildInfo = server.upload(spec: uploadSpec)
                     buildInfo.env.collect()
                     server.publishBuildInfo(buildInfo)
 
