@@ -56,19 +56,15 @@ pipeline {
                     echo '<----- Uploading artifact to JFrog ----->'
 
                     // Create Artifactory server connection
-                    def server = Artifactory.newServer(
-                        url: "${registry}/artifactory",
-                        credentialsId: 'jfrog-cred'
-                    )
-
-                    def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}";
+                    def server = Artifactory.newServer url: registry+"/artifactory", credentialsId: 'jfrog-cred'
+                    def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}";
 
                     // Ensure target repository is correct
                     def uploadSpec = """{
                         "files": [
                             {
                                 "pattern": "jarstaging/(*)",
-                                "target": "lib-release-local1/{1}",
+                                "target": "lib-release-local2/{1}",
                                 "flat": "false",
                                 "props": "${properties}"
                                 "exclusions": ["*.sha1", "*.md5"]
