@@ -1,3 +1,4 @@
+def registry = 'http://valaxy679.jfrog.io/'
 pipeline {
     agent {
         node{
@@ -40,6 +41,30 @@ pipeline {
                     error "pipeline aborted due to quality gate failure: ${qg.status}"
                 }
             }
+            }
+        }
+    }
+    stage ('upload artifact to jfrog'){
+        steps {
+            script {
+                echo '<-----uploading artifact to jfrog----->'
+                def server = Artifactory.newserver url:registry+"/artifactory", credentialsId: 'jfrog-cred'
+                def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}";
+                def uploadspec = """{
+                    "files": [
+                        {
+                            "pattern": "jarstaging/(*)",
+                            "target": "libs-release-local1/{1}",
+                            "flat": "false",
+                            "props": "${properties}"
+                            "exclusions": ["**/*.md5", "**/*.sha1"]
+                        }
+                    ]
+                }"""
+                def buildInfo = server.upload(uploadspec)
+                buildInfo.env.collect()
+                server.publishBuildInfo(buildInfo)
+                echo '<-----jar publish ended----->'
             }
         }
     }
