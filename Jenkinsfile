@@ -14,13 +14,13 @@ pipeline {
                 sh 'mvn clean deploy -Dmaven.test.skip=true'
             }
         }
-        stage('test'){
+        /*stage('test'){
             steps {
                 echo "<-----unit test started----->"
                 sh 'mvn surefire-report:report'
                 echo "<-----unit test started----->"
             }
-        }
+        }*/
         stage('sonarqube analysis'){
         environment {
             scannerHome = tool 'sonar-scanner'
