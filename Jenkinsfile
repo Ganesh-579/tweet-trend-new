@@ -61,16 +61,17 @@ pipeline {
                         credentialsId: 'jfrog-cred'
                     )
 
-                    def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}"
+                    def properties = "buildid=${env.BUILD_ID},commitid=${env.GIT_COMMIT}";
 
                     // Ensure target repository is correct
                     def uploadSpec = """{
                         "files": [
                             {
-                                "pattern": "target/*.jar",
-                                "target": "lib-release-local1/com/valaxy/demo-workshop/${env.BUILD_ID}/",
-                                "flat": false,
+                                "pattern": "jarstaging/(*)",
+                                "target": "lib-release-local1/{1}",
+                                "flat": "false",
                                 "props": "${properties}"
+                                "exclusions": ["*.sha1", "*.md5"]
                             }
                         ]
                     }"""
