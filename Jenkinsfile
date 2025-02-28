@@ -68,7 +68,7 @@ pipeline {
                         "files": [
                             {
                                 "pattern": "target/*.jar",
-                                "target": "libs-release-local1/com/valaxy/demo-workshop/${env.BUILD_ID}/",
+                                "target": "lib-release-local1/com/valaxy/demo-workshop/${env.BUILD_ID}/",
                                 "flat": false,
                                 "props": "${properties}"
                             }
