@@ -1,4 +1,6 @@
-def registry = 'http://valaxy679.jfrog.io'  // Removed extra '/'
+def registry = 'http://valaxy679.jfrog.io'
+def imageName = 'valaxy679.jfrog.io/valaxy-docker-local/ttrend'
+def version = '2.1.2'
 
 pipeline {
     agent {
@@ -80,6 +82,27 @@ pipeline {
                     server.publishBuildInfo(buildInfo)
 
                     echo '<----- JAR publish completed ----->'
+                }
+            }
+        }
+
+        stage('Docker Build'){
+            steps {
+                script {
+                    echo '<----- Docker build started ----->'
+                    app = docker.build(imageName + ":"+version)
+                    echo '<----- Docker build completed ----->'
+                }
+            }
+        }
+        stage(' Docker Publish'){
+            steps {
+                script {
+                    echo '<----- Docker publish started ----->'
+                    docker.withRegistry(registry, 'jfrog-cred') {
+                        app.push()
+                    }
+                    echo '<----- Docker publish completed ----->'
                 }
             }
         }
